@@ -1,0 +1,22 @@
+## PHP
+php-swoole/vendor/
+php-swoole/composer.lock
+
+## Kotlin / Gradle
+kotlin-coroutines/.gradle/
+kotlin-coroutines/build/
+kotlin-coroutines/out/
+*.class
+*.jar
+!kotlin-coroutines/gradle/wrapper/gradle-wrapper.jar
+
+## Resultados de benchmark (gerados a cada run)
+load-test/results/*.json
+load-test/results/*.html
+!load-test/results/.gitkeep
+
+## OS / editores
+.DS_Store
+*.swp
+.idea/
+.vscode/
