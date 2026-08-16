@@ -3,6 +3,7 @@ package com.riskanalysis
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
+import io.ktor.server.application.call
 import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
@@ -15,9 +16,11 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNamingStrategy
 
+@OptIn(ExperimentalSerializationApi::class)
 fun main() {
     val port = System.getenv("PORT")?.toIntOrNull() ?: 9502
     val redisHost = System.getenv("REDIS_HOST") ?: "redis"
