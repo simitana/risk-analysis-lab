@@ -7,7 +7,6 @@ require __DIR__ . '/RiskCalculator.php';
 use Swoole\Http\Request;
 use Swoole\Http\Response;
 use Swoole\Http\Server;
-use Swoole\Coroutine\Redis as CoRedis;
 
 $host = getenv('HOST') ?: '0.0.0.0';
 $port = (int) (getenv('PORT') ?: 9501);
@@ -20,6 +19,12 @@ $server->set([
     'worker_num' => $workers,
     'enable_coroutine' => true,
     'http_compression' => false,
+    // O client Swoole\Coroutine\Redis nativo foi removido a partir do
+    // Swoole 5.x. A forma atual é usar o phpredis (ext-redis) normal e
+    // deixar o runtime do worker "hookar" as chamadas de I/O bloqueantes
+    // (incluindo o phpredis) para rodarem como coroutine por baixo dos
+    // panos, sem travar o worker inteiro.
+    'hook_flags' => SWOOLE_HOOK_ALL,
 ]);
 
 $server->on('request', function (Request $req, Response $res) use ($redisHost, $redisPort) {
@@ -55,9 +60,10 @@ $server->on('request', function (Request $req, Response $res) use ($redisHost, $
         return;
     }
 
-    // I/O real via cliente Redis baseado em coroutine — a chamada faz
-    // yield da coroutine atual sem bloquear o worker inteiro.
-    $redis = new CoRedis();
+    // I/O real via phpredis — hookado como coroutine pelo runtime do
+    // worker (hook_flags acima), então a chamada faz yield da coroutine
+    // atual em vez de bloquear o worker inteiro.
+    $redis = new \Redis();
     $redis->connect($redisHost, $redisPort);
 
     $historyKey = "risk:history:{$applicant['applicant_id']}";

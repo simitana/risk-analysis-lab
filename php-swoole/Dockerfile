@@ -5,8 +5,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libbrotli-dev \
         pkg-config \
         $PHPIZE_DEPS \
-    && pecl install swoole \
-    && docker-php-ext-enable swoole \
+    && pecl install swoole redis \
+    && docker-php-ext-enable swoole redis \
     && docker-php-ext-install sockets \
     && apt-get purge -y --auto-remove $PHPIZE_DEPS pkg-config \
     && rm -rf /var/lib/apt/lists/*
