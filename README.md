@@ -4,7 +4,7 @@ Laboratório de benchmark comparando dois serviços de **análise de risco de cr
 com a **mesma regra de negócio**, implementados em dois modelos de concorrência
 diferentes:
 
-- **PHP + Swoole/OpenSwoole** — coroutines cooperativas (event loop single-thread
+- **PHP + Swoole** — coroutines cooperativas (event loop single-thread
   por worker, com N workers).
 - **Kotlin + Ktor + kotlinx.coroutines** — coroutines sobre um pool de threads
   (dispatchers `IO` e `Default`), escalando nativamente entre núcleos.

@@ -2,10 +2,11 @@ FROM php:8.3-cli
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         libssl-dev \
+        libbrotli-dev \
         pkg-config \
         $PHPIZE_DEPS \
-    && pecl install openswoole \
-    && docker-php-ext-enable openswoole \
+    && pecl install swoole \
+    && docker-php-ext-enable swoole \
     && docker-php-ext-install sockets \
     && apt-get purge -y --auto-remove $PHPIZE_DEPS pkg-config \
     && rm -rf /var/lib/apt/lists/*

@@ -1,6 +1,6 @@
 {
     "name": "risk-analysis-lab/php-swoole",
-    "description": "Serviço de análise de risco de crédito sobre OpenSwoole (coroutines cooperativas)",
+    "description": "Serviço de análise de risco de crédito sobre Swoole (coroutines cooperativas)",
     "type": "project",
     "license": "MIT",
     "require": {
