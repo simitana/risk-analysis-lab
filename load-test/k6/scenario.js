@@ -24,6 +24,9 @@ export const options = {
   thresholds: {
     http_req_failed: ['rate<0.01'],
   },
+  // Por padrão o k6 só resume p(90)/p(95); p99 é o que mais importa para
+  // comparar cauda de latência entre os dois modelos de concorrência.
+  summaryTrendStats: ['avg', 'min', 'med', 'p(90)', 'p(95)', 'p(99)', 'max'],
 };
 
 const businessErrors = new Counter('risk_analysis_errors');

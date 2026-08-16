@@ -59,7 +59,7 @@ if command -v jq >/dev/null 2>&1; then
       "  req/s (médio):    \($m.http_reqs.rate // "n/a")",
       "  latência p95 ms:  \($m.http_req_duration["p(95)"] // "n/a")",
       "  latência p99 ms:  \($m.http_req_duration["p(99)"] // "n/a")",
-      "  taxa de falha:    \($m.http_req_failed.rate // "n/a")"
+      "  taxa de falha:    \($m.http_req_failed.value // "n/a")"
     ' "$f"
   done
 else
