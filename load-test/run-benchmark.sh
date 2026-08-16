@@ -12,6 +12,9 @@ RESULTS_DIR="load-test/results"
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
 
 mkdir -p "$RESULTS_DIR"
+# O container do k6 roda como usuário não-root (UID diferente do host),
+# então precisa de permissão de escrita explícita neste diretório.
+chmod 777 "$RESULTS_DIR"
 
 echo "==> Subindo redis + serviços (build + recursos idênticos)..."
 docker compose up -d --build redis php-swoole kotlin-coroutines
