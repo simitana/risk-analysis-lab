@@ -17,10 +17,10 @@ mkdir -p "$RESULTS_DIR"
 chmod 777 "$RESULTS_DIR"
 
 echo "==> Subindo redis + serviços (build + recursos idênticos)..."
-docker compose up -d --build redis php-swoole kotlin-coroutines
+docker compose up -d --build redis php-swoole kotlin-coroutines php-phalcon-swoole
 
 echo "==> Aguardando health checks..."
-for svc in risk-lab-php-swoole risk-lab-kotlin; do
+for svc in risk-lab-php-swoole risk-lab-kotlin risk-lab-php-phalcon-swoole; do
   until [ "$(docker inspect -f '{{.State.Health.Status}}' "$svc" 2>/dev/null)" = "healthy" ]; do
     sleep 2
   done
@@ -45,6 +45,7 @@ run_k6() {
 
 run_k6 "php-swoole" "http://risk-lab-php-swoole:9501"
 run_k6 "kotlin-coroutines" "http://risk-lab-kotlin:9502"
+run_k6 "php-phalcon-swoole" "http://risk-lab-php-phalcon-swoole:9503"
 
 echo ""
 echo "==> Resultados salvos em ${RESULTS_DIR}/*-${TIMESTAMP}.json"
