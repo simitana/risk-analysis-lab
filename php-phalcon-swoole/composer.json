@@ -1,0 +1,9 @@
+{
+    "name": "risk-analysis-lab/php-phalcon-swoole",
+    "description": "Serviço de análise de risco de crédito sobre Phalcon (Micro) rodando dentro do Swoole em worker mode, com bridge própria eliminando bootstrap por requisição",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": ">=8.2"
+    }
+}
