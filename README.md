@@ -110,15 +110,16 @@ se não for tratado (ambos resolvidos em `php-phalcon-swoole/src/Bridge/`):
   próprio `new \Phalcon\Http\Response()`, isolado por já viver só na pilha de
   chamadas daquela requisição.
 
-Vale reproduzir o benchmark para este serviço com `bash
-load-test/run-benchmark.sh` e comparar: a expectativa de teoria de
-concorrência é que ele **não** deva se comportar melhor que `php-swoole` sob
-a carga CPU-bound do Monte Carlo — ambos são workers Swoole cooperativos, e
-o gargalo ali é paralelismo real de CPU, não custo de bootstrap por
-requisição (que é justamente o que a bridge elimina). Onde a bridge deveria
-aparecer é em cargas com **muitas requisições pequenas e I/O-bound**, ou ao
-comparar contra uma hipotética versão do mesmo serviço rodando sob PHP-FPM
-(fora do escopo deste laboratório, que só compara os três serviços acima).
+Expectativa de teoria de concorrência: ele **não** deveria se comportar
+melhor que `php-swoole` sob a carga CPU-bound do Monte Carlo — ambos são
+workers Swoole cooperativos, e o gargalo ali é paralelismo real de CPU, não
+custo de bootstrap por requisição (que é justamente o que a bridge elimina).
+O benchmark ("Resultado de referência" abaixo) confirma isso — ficou atrás
+até do `php-swoole` puro, pelo overhead de framework que soma sem resolver o
+gargalo real. Onde a bridge deveria compensar é em cargas com **muitas
+requisições pequenas e I/O-bound**, ou ao comparar contra uma hipotética
+versão do mesmo serviço rodando sob PHP-FPM (fora do escopo deste
+laboratório, que só compara os três serviços acima).
 
 ## Rodando o benchmark de carga
 
@@ -139,42 +140,51 @@ por hardware).
 ## Resultado de referência
 
 Obtido nesta máquina (2 vCPUs / 512 MB por serviço, limite idêntico via
-`docker-compose.yml`), com `VUS=300`, `SUSTAIN=60s`:
+`docker-compose.yml`), com `VUS=300`, `SUSTAIN=60s`, os três serviços medidos
+na mesma execução de `load-test/run-benchmark.sh`:
 
-| Métrica              | PHP Swoole | Kotlin Coroutines | PHP Phalcon+Swoole |
-|-----------------------|-----------:|-------------------:|--------------------:|
-| Requests totais        | 341.457    | 717.610            | *a rodar*            |
-| Throughput médio       | 3.793 req/s | 7.973 req/s        | *a rodar*            |
-| Latência p95           | 100,8 ms   | 60,9 ms             | *a rodar*            |
-| Latência p99           | 124,6 ms   | 77,3 ms             | *a rodar*            |
-| Taxa de erro           | 0%         | 0%                  | *a rodar*            |
+| Métrica              | PHP Swoole  | Kotlin Coroutines | PHP Phalcon+Swoole |
+|-----------------------|------------:|-------------------:|--------------------:|
+| Requests totais        | 268.922     | 340.340             | 226.078              |
+| Throughput médio       | 2.988 req/s | 3.782 req/s         | 2.512 req/s          |
+| Latência p95           | 135,7 ms    | 142,8 ms            | 158,7 ms             |
+| Latência p99           | 160,6 ms    | 186,8 ms            | 177,4 ms             |
+| Taxa de erro           | 0%          | 0%                  | 0%                   |
 
-*(as três primeiras colunas vieram de uma execução real de
-`load-test/run-benchmark.sh` nesta máquina; a coluna do Phalcon+Swoole ainda
-não foi medida desde que ele entrou no lab — rode o script de novo para
-preencher, `run_k6` já inclui os três serviços.)*
+**Kotlin/coroutines entregou o maior throughput**, sob a mesma carga, mesmos
+limites de CPU/memória e mesma regra de negócio. Isso não é sobre I/O — os
+três modelos lidam bem com I/O concorrente (o Redis nunca foi o gargalo). A
+diferença aparece porque a simulação Monte Carlo é **CPU-bound**:
 
-**Kotlin/coroutines entregou ~2,1x mais throughput e cauda de latência bem
-menor**, sob a mesma carga, mesmos limites de CPU/memória e mesma regra de
-negócio. Isso não é sobre I/O — os dois modelos lidam bem com I/O concorrente
-(o Redis nunca foi o gargalo). A diferença aparece porque a simulação Monte
-Carlo é **CPU-bound**:
-
-- No **Swoole**, cada worker é um event loop cooperativo single-thread. A
-  simulação Monte Carlo roda de forma síncrona dentro do worker e **bloqueia
-  o loop inteiro** até terminar — nenhuma outra coroutine daquele worker
-  progride nesse meio-tempo. Mais workers ajudam (mais processos == mais
-  paralelismo real do SO), mas o worker individual não paraleliza CPU.
+- No **Swoole** (puro ou com Phalcon por cima), cada worker é um event loop
+  cooperativo single-thread. A simulação Monte Carlo roda de forma síncrona
+  dentro do worker e **bloqueia o loop inteiro** até terminar — nenhuma outra
+  coroutine daquele worker progride nesse meio-tempo. Mais workers ajudam
+  (mais processos == mais paralelismo real do SO), mas o worker individual
+  não paraleliza CPU.
 - No **Kotlin**, o cálculo é despachado explicitamente para
   `Dispatchers.Default`, cujo pool de threads escala com o número de núcleos
   disponíveis — o trabalho de CPU é genuinamente paralelizado pela JVM/SO
   entre threads, não apenas intercalado cooperativamente.
 
+**PHP Phalcon+Swoole ficou atrás até do `php-swoole` puro** — e isso confirma
+a expectativa da seção "PHP Phalcon+Swoole: a bridge" acima, não a contradiz:
+os dois rodam exatamente o mesmo modelo de worker cooperativo, então a bridge
+não tinha como ganhar aqui — ela elimina bootstrap por requisição, que nunca
+foi o gargalo desta carga. O que ela soma é overhead genuíno de framework por
+cima do mesmo teto de CPU: roteamento do Micro, resolução via DI e a
+construção de um `Phalcon\Http\Response` por requisição (ver
+`PhalconApp::respond()`). Ou seja, para uma carga CPU-bound como esta, a
+bridge paga um custo real sem nenhum ganho — o cenário onde ela deveria
+compensar é o inverso (muitas requisições pequenas e I/O-bound, onde o
+bootstrap de framework eliminado seria uma fração maior do tempo de request).
+
 Coroutines cooperativas (Swoole) são ótimas para I/O-bound puro; para cargas
 com componente de CPU real dentro do request — como um modelo de risco de
 verdade —, um modelo com paralelismo real de threads (Kotlin/JVM) tende a
 escalar melhor. Vale reproduzir com `SWOOLE_WORKERS` mais alto (variável de
-ambiente do `php-swoole`) para ver o quanto mais workers reduz essa diferença.
+ambiente comum aos dois serviços PHP) para ver o quanto mais workers reduz
+essa diferença.
 
 ## Estrutura do projeto
 
