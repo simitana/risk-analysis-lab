@@ -50,7 +50,29 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-    # Recursos IDÊNTICOS ao serviço php-swoole: é o que torna a
+    # Recursos IDÊNTICOS aos demais serviços: é o que torna a
+    # comparação de performance justa.
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 512M
+
+  php-phalcon-swoole:
+    build: ./php-phalcon-swoole
+    container_name: risk-lab-php-phalcon-swoole
+    environment:
+      HOST: 0.0.0.0
+      PORT: 9503
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SWOOLE_WORKERS: 4
+    ports:
+      - "9503:9503"
+    depends_on:
+      redis:
+        condition: service_healthy
+    # Recursos IDÊNTICOS aos demais serviços: é o que torna a
     # comparação de performance justa.
     deploy:
       resources:
