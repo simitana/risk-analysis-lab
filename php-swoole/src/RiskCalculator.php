@@ -10,8 +10,9 @@ declare(strict_types=1);
  * (carga de I/O deliberada), para expor tanto o comportamento sob
  * concorrência de I/O quanto sob concorrência de CPU.
  *
- * Esta regra é replicada 1:1 no serviço Kotlin — qualquer alteração aqui
- * deve ser espelhada em RiskCalculator.kt.
+ * Esta regra é replicada 1:1 nos outros dois serviços — qualquer alteração
+ * aqui deve ser espelhada em kotlin-coroutines/.../RiskCalculator.kt e em
+ * php-phalcon-swoole/src/RiskCalculator.php.
  */
 final class RiskCalculator
 {

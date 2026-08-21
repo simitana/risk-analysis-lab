@@ -12,7 +12,8 @@ import kotlin.random.Random
  * (carga de I/O deliberada), para expor tanto o comportamento sob
  * concorrência de I/O quanto sob concorrência de CPU.
  *
- * Espelha 1:1 a regra em php-swoole/src/RiskCalculator.php.
+ * Espelha 1:1 a regra em php-swoole/src/RiskCalculator.php e em
+ * php-phalcon-swoole/src/RiskCalculator.php.
  */
 object RiskCalculator {
     private const val MONTE_CARLO_ITERATIONS = 2000
